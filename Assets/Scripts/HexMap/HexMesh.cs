@@ -126,11 +126,26 @@ public class HexMesh : MonoBehaviour
         {
             Vector3 v5 = v2 + HexMetrics.GetBridge(direction.Next());
             v5.y = nextNeighbor.Elevation * HexMetrics.elevationStep;
-            // AddTriangle(v2, v4, v2 + HexMetrics.GetBridge(direction.Next()));
-            AddTriangle(v2, v4, v5);
-            AddTriangleColor(cell.ColorField, neighbor.ColorField, nextNeighbor.ColorField);
 
-            TriangulateEdgeTerraces(v1, v2, cell, v3, v4, neighbor);
+            if (cell.Elevation <= neighbor.Elevation)
+            {
+                if (cell.Elevation <= nextNeighbor.Elevation)
+                {
+                    TriangulateCorner(v2, cell, v4, neighbor, v5, nextNeighbor);
+                }
+                else
+                {
+                    TriangulateCorner(v5, nextNeighbor, v2, cell, v4, neighbor);
+                }
+            }
+            else if (neighbor.Elevation <= nextNeighbor.Elevation)
+            {
+                TriangulateCorner(v4, neighbor, v5, nextNeighbor, v2, cell);
+            }
+            else
+            {
+                TriangulateCorner(v5, nextNeighbor, v2, cell, v4, neighbor);
+            }
         }
     }
 
@@ -162,6 +177,12 @@ public class HexMesh : MonoBehaviour
         AddQuadColor(c2, endCell.ColorField);
     }
 
+    void TriangulateCorner(Vector3 bottom, HexCell bottomCell, Vector3 left, HexCell leftCell, Vector3 right,
+        HexCell rightCell)
+    {
+        AddTriangle(bottom, left, right);
+        AddTriangleColor(bottomCell.ColorField, leftCell.ColorField, rightCell.ColorField);
+    }
     #endregion
 
     #region TriangleMethods
