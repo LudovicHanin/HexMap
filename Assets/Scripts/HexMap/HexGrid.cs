@@ -4,46 +4,83 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEditor.Timeline.Actions;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class HexGrid : MonoBehaviour
 {
     #region F/P
 
-    [SerializeField] private int width = 6;
-    [SerializeField] private int height = 6;
+    [SerializeField] private int cellCountX = 6;
+    [SerializeField] private int cellCountZ = 6;
+    [SerializeField] private int chunkCountX = 4, chunkCountZ = 3;
     [SerializeField] private HexCell cellPrefab = null;
     [SerializeField] private TMP_Text cellLabelPrefab = null;
 
+    [SerializeField] private Texture2D noiseSource = null;
     [SerializeField] Color defaultColor = Color.white;
+    [SerializeField] HexGridChunk chunkPrefab = null;
 
-    //[SerializeField] Color touchedColor = Color.magenta;
-    //
+
     private Canvas gridCanvas = null;
     private HexMesh hexMesh = null;
 
     private HexCell[] cells;
 
+    private HexGridChunk[] chunks;
+
     //
-    public int Width => width;
-    public int Height => height;
+    public int CellCountX => cellCountX;
+    public int CellCountZ => cellCountZ;
     public HexCell CellPrefab => cellPrefab;
     public TMP_Text CellLabelPrefab => cellLabelPrefab;
     public Canvas GridCanvas => gridCanvas;
+
+    public HexGridChunk ChunkPrefab => chunkPrefab;
 
     #endregion
 
     #region UnityMethods
 
+    private void OnEnable()
+    {
+        HexMetrics.noiseSource = noiseSource;
+    }
+
     private void Awake()
     {
+        HexMetrics.noiseSource = noiseSource;
+        
         gridCanvas = GetComponentInChildren<Canvas>();
         hexMesh = GetComponentInChildren<HexMesh>();
 
-        cells = new HexCell[height * width];
+        cellCountX = chunkCountX * HexMetrics.chunkSizeX;
+        cellCountZ = chunkCountZ * HexMetrics.chunkSizeZ;
 
-        for (int z = 0, i = 0; z < height; z++)
+        CreateChunks();
+        CreateCells();
+    }
+
+    private void CreateChunks()
+    {
+        chunks = new HexGridChunk[chunkCountX * chunkCountZ];
+
+        for (int z = 0, i = 0; z < chunkCountZ; z++)
         {
-            for (int x = 0; x < width; x++)
+            for (int x = 0; x < chunkCountX; x++)
+            {
+                HexGridChunk chunk = chunks[i++] = Instantiate(chunkPrefab);
+                chunk.transform.SetParent(transform);
+            }
+        }
+    }
+
+    private void CreateCells()
+    {
+        cells = new HexCell[cellCountZ * cellCountX];
+
+        for (int z = 0, i = 0; z < cellCountZ; z++)
+        {
+            for (int x = 0; x < cellCountX; x++)
             {
                 CreateCell(x, z, i++);
             }
@@ -80,18 +117,18 @@ public class HexGrid : MonoBehaviour
         {
             if ((z & 1) == 0)
             {
-                _cell.SetNeighbor(HexDirection.SE, cells[i - width]);
+                _cell.SetNeighbor(HexDirection.SE, cells[i - cellCountX]);
                 if (x > 0)
                 {
-                    _cell.SetNeighbor(HexDirection.SW, cells[i - width - 1]);
+                    _cell.SetNeighbor(HexDirection.SW, cells[i - cellCountX - 1]);
                 }
             }
             else
             {
-                _cell.SetNeighbor(HexDirection.SW, cells[i - width]);
-                if (x < width - 1)
+                _cell.SetNeighbor(HexDirection.SW, cells[i - cellCountX]);
+                if (x < cellCountX - 1)
                 {
-                    _cell.SetNeighbor(HexDirection.SE, cells[i - width + 1]);
+                    _cell.SetNeighbor(HexDirection.SE, cells[i - cellCountX + 1]);
                 }
             }
         }
@@ -102,13 +139,15 @@ public class HexGrid : MonoBehaviour
         _label.text = _cell.coordinates.ToStringOnSeparateLines();
 
         _cell.UiRect = _label.rectTransform;
+
+        _cell.Elevation = 0;
     }
 
     public HexCell GetCell(Vector3 position)
     {
         position = transform.InverseTransformPoint(position);
         HexCoordinates coordinates = HexCoordinates.FromPosition(position);
-        int index = coordinates.X + coordinates.Z * width + coordinates.Z / 2;
+        int index = coordinates.X + coordinates.Z * cellCountX + coordinates.Z / 2;
         return cells[index];
     }
 
