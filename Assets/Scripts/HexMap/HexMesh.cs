@@ -11,9 +11,9 @@ public class HexMesh : MonoBehaviour
     private Mesh hexMesh = null;
     private MeshCollider meshCollider = null;
 
-    private List<Vector3> vertices = new List<Vector3>();
-    private List<int> triangles = new List<int>();
-    private List<Color> colors = new List<Color>();
+    static List<Vector3> vertices = new List<Vector3>();
+    static List<int> triangles = new List<int>();
+    static List<Color> colors = new List<Color>();
 
     #endregion
 
