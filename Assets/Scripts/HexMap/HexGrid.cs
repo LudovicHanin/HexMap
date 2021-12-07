@@ -42,7 +42,6 @@ public class HexGrid : MonoBehaviour
     #endregion
 
     #region UnityMethods
-
     private void OnEnable()
     {
         HexMetrics.noiseSource = noiseSource;
@@ -52,26 +51,17 @@ public class HexGrid : MonoBehaviour
     {
         HexMetrics.noiseSource = noiseSource;
         
-        // gridCanvas = GetComponentInChildren<Canvas>();
-        // hexMesh = GetComponentInChildren<HexMesh>();
-
         cellCountX = chunkCountX * HexMetrics.chunkSizeX;
         cellCountZ = chunkCountZ * HexMetrics.chunkSizeZ;
 
         CreateChunks();
         CreateCells();
     }
-
-
-
-    // private void Start()
-    // {
-    //     hexMesh.Triangulate(cells);
-    // }
-
     #endregion
 
     #region CustomMethods
+    
+    #region Private
     private void CreateChunks()
     {
         chunks = new HexGridChunk[chunkCountX * chunkCountZ];
@@ -157,7 +147,9 @@ public class HexGrid : MonoBehaviour
         int localZ = z - chunkZ * HexMetrics.chunkSizeZ;
         chunk.AddCell(localX + localZ * HexMetrics.chunkSizeX, cell);
     }
-
+    #endregion
+    
+    #region Public
     public HexCell GetCell(Vector3 position)
     {
         position = transform.InverseTransformPoint(position);
@@ -166,9 +158,29 @@ public class HexGrid : MonoBehaviour
         return cells[index];
     }
 
-    // public void Refresh()
-    // {
-    //     hexMesh.Triangulate(cells);
-    // }
+    public HexCell GetCell(HexCoordinates coordinates)
+    {
+        int z = coordinates.Z;
+        if (z < 0 || z >= cellCountZ)
+        {
+            return null;
+        }
+        int x = coordinates.X + z / 2;
+        if (x < 0 || x >= cellCountX)
+        {
+            return null;
+        }
+        return cells[x + z * cellCountX];
+    }
+
+    public void ShowUI(bool visible)
+    {
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            chunks[i].ShowUI(visible);
+        }
+    }
+    #endregion
+    
     #endregion
 }
